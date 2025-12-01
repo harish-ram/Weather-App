@@ -1,93 +1,43 @@
-import React, { useState } from "react";
-import { searchCity, getCurrentWeather, fetchAQNearby } from "./lib/api";
-import GlassCard from "./components/GlassCard";
-import AQMap from "./components/AQMap";
+import React, { useState } from 'react'
+import { Routes, Route, Link } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import Maps from './pages/Maps'
+import Forecasts from './pages/Forecasts'
+import Analytics from './pages/Analytics'
+import Alerts from './pages/Alerts'
+import './styles/layout.css'
+import BookmarksPanel from './components/BookmarksPanel'
 
-export default function App() {
-	const [query, setQuery] = useState("");
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState(null);
-	const [weather, setWeather] = useState(null);
-	const [aqData, setAqData] = useState(null);
+function Nav({ onToggleBookmarks }){
+  return (
+    <nav className="w-full bg-black/30 backdrop-blur-md p-3 flex gap-4 items-center">
+      <div className="text-xl font-semibold">Check Weather</div>
+      <div className="flex-1" />
+      <Link to="/" className="px-3 py-1 rounded hover:bg-white/5">Dashboard</Link>
+      <Link to="/forecasts" className="px-3 py-1 rounded hover:bg-white/5">Forecasts</Link>
+      <Link to="/maps" className="px-3 py-1 rounded hover:bg-white/5">AQI Map</Link>
+      <Link to="/analytics" className="px-3 py-1 rounded hover:bg-white/5">Analytics</Link>
+      <Link to="/alerts" className="px-3 py-1 rounded hover:bg-white/5">Alerts</Link>
+      <button onClick={onToggleBookmarks} className="px-3 py-1 rounded hover:bg-white/5">Bookmarks</button>
+    </nav>
+  )
+}
 
-	async function handleSearch(e) {
-		e?.preventDefault();
-		if (!query) return;
-		setLoading(true);
-		setError(null);
-		setWeather(null);
-		try {
-			const place = await searchCity(query);
-			if (!place) throw new Error("Location not found");
-			const w = await getCurrentWeather(place.latitude, place.longitude);
-			if (!w) throw new Error("Weather not available");
-			setWeather({ place: place.name, latitude: place.latitude, longitude: place.longitude, ...w });
-		} catch (err) {
-			setError(err.message || String(err));
-		} finally {
-			setLoading(false);
-		}
-	}
-
-	// fetch AQ when weather/place is set
-	React.useEffect(() => {
-		if (!weather) return;
-		let mounted = true;
-		(async () => {
-			const list = await fetchAQNearby(weather.latitude, weather.longitude, 20000, 60);
-			console.debug("fetchAQNearby ->", list);
-			if (!mounted) return;
-			if (list && list.length > 0) {
-				setAqData(list);
-			} else {
-				// fallback: generate mock nearby AQ points so the map shows data during development
-				const mock = [];
-				const N = 6;
-				for (let i = 0; i < N; i++) {
-					const angle = (i / N) * Math.PI * 2;
-					const dist = 0.02 + Math.random() * 0.04;
-					mock.push({
-						location: `Mock Station ${i + 1}`,
-						latitude: weather.latitude + Math.cos(angle) * dist,
-						longitude: weather.longitude + Math.sin(angle) * dist,
-						measurements: { pm25: { value: Math.round(5 + Math.random() * 90), unit: 'µg/m³' } },
-					});
-				}
-				setAqData(mock);
-			}
-		})();
-		return () => { mounted = false };
-	}, [weather]);
-
-	return (
-		<div className="app-root">
-			<header className="app-header">
-					<h1>Check Weather</h1>
-				<form onSubmit={handleSearch} className="search-form">
-					<input
-						aria-label="city"
-						placeholder="Enter city (e.g. London)"
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-					/>
-					<button type="submit" disabled={loading}>
-						{loading ? "Loading…" : "Search"}
-					</button>
-				</form>
-			</header>
-
-			<main className="app-main">
-				{error && <div className="error">{error}</div>}
-				{weather ? (
-					<div style={{width: '100%'}}>
-						<GlassCard weather={weather} />
-						<div style={{height:16}} />
-						<AQMap center={[weather.latitude, weather.longitude]} aqData={aqData} />
-					</div>
-				) : (
-					<div className="placeholder">Search a city to see current weather.</div>
-				)}
-			</main>
-		</div>
-	);
+export default function App(){
+  const [showBookmarks, setShowBookmarks] = useState(false)
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Nav onToggleBookmarks={()=>setShowBookmarks(v=>!v)} />
+      <BookmarksPanel open={showBookmarks} onClose={()=>setShowBookmarks(false)} />
+      <main className="flex-1 p-6">
+        <Routes>
+          <Route path='/' element={<Dashboard/>} />
+          <Route path='/forecasts' element={<Forecasts/>} />
+          <Route path='/maps' element={<Maps/>} />
+          <Route path='/analytics' element={<Analytics/>} />
+          <Route path='/alerts' element={<Alerts/>} />
+        </Routes>
+      </main>
+    </div>
+  )
 }

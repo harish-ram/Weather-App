@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite'
-import { VitePWA } from 'vite-plugin-pwa'
 
 // Vite dev server proxy to avoid CORS when calling OpenAQ during development.
 export default defineConfig(({ mode }) => {
@@ -17,19 +16,6 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    plugins: [
-      VitePWA({
-        registerType: 'autoUpdate',
-        manifest: {
-          name: 'Check Weather',
-          short_name: 'CheckWeather',
-          start_url: '.',
-          display: 'standalone',
-          background_color: '#071426',
-          theme_color: '#0ea5a4',
-          icons: [{ src: '/favicon.svg', sizes: '192x192', type: 'image/svg+xml' }],
-        },
-      }),
-    ],
+    plugins: [],
   }
 })

@@ -23,14 +23,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v3
-
-      - name: Upload artifact
-        # Use a newer upload-pages-artifact release to avoid deprecated internal deps
-        uses: actions/upload-pages-artifact@v2
+      - name: Deploy to GitHub Pages (via git-push)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: ./dist
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+          branch: gh-pages
+          folder: ./dist
+          clean: true
+          token: ${{ secrets.GITHUB_TOKEN }}
